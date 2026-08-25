@@ -1,0 +1,14 @@
+{
+  "role": "coordinator",
+  "device_allowlist": {
+    "groot": "REPLACE_WITH_GROOT_PUBLIC_KEY_B64",
+    "mbp": "REPLACE_WITH_MBP_PUBLIC_KEY_B64"
+  },
+  "lease_ttl_seconds": 60,
+  "audit_jsonl": "/var/lib/hermes-mesh/coordinator-events.jsonl",
+  "artifact_policy": {
+    "root": "/var/lib/hermes-mesh/artifacts",
+    "max_bytes": 10485760,
+    "allowed_types": ["application/json"]
+  }
+}

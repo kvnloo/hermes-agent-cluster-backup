@@ -15,6 +15,8 @@
 
 `hermes-agent-cluster` is a distributed cluster extension for Hermes Agent. It enables multiple Hermes instances running on different devices to coordinate and collaborate as a unified distributed system. Each node maintains its own local `kanban.db` — no shared database required. Nodes communicate via HTTP API for cluster coordination, syncing only task metadata and lifecycle events.
 
+> **kvnloo placement-only MVP:** the safe groot → mbp path in this fork does **not** use the legacy replicated-Kanban architecture described below. Groot's existing Hermes Kanban is the sole authority; mbp receives signed bounded leases and returns signed claims for independent groot verification. Start with [`docs/mesh-placement-mvp.md`](docs/mesh-placement-mvp.md) and [`docs/placement-only-migration.md`](docs/placement-only-migration.md). Do not expose legacy task completion, sync, recovery, or federation APIs to mbp.
+
 ### 🏗 Architecture
 
 ```

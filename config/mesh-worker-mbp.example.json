@@ -1,0 +1,16 @@
+{
+  "role": "worker",
+  "device_allowlist": {
+    "groot": "REPLACE_WITH_GROOT_PUBLIC_KEY_B64",
+    "mbp": "REPLACE_WITH_MBP_PUBLIC_KEY_B64"
+  },
+  "audit_jsonl": "/Users/USER/Library/Application Support/hermes-mesh/worker-events.jsonl",
+  "adapter_policy": {
+    "allowed": ["sha256-benchmark@1"],
+    "timeout_seconds": 30,
+    "min_free_memory_mb": 2048,
+    "min_free_disk_mb": 4096,
+    "max_thermal_c": 85,
+    "owner_opt_in": true
+  }
+}

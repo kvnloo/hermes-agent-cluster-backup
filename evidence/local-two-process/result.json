@@ -1,0 +1,27 @@
+{
+  "evidence_root": "/tmp/hermes-mesh-demo-amgn_4xt",
+  "placement_state_readback": {
+    "canonical_authority": "external-hermes-kanban",
+    "placement_state": "verified_claim",
+    "task_id": "t_local_canary"
+  },
+  "real_mbp_proven": false,
+  "result": "PASS",
+  "topology": [
+    "groot-baseline",
+    "mbp-worker"
+  ],
+  "transport": "two local HTTP processes",
+  "verification": {
+    "artifact_digest": "79a93db4b2a94005580b371cd1b0d52dd8707bb2bc091e596ba0f729028e7bf7",
+    "metrics": {
+      "bytes_transferred": 125,
+      "lease_ms": 5,
+      "queue_ms": 0,
+      "transfer_ms": 0,
+      "verification_ms": 0
+    },
+    "receipt_id": "51f449fcc2a74e0bb0b3a88f510a355b",
+    "verified": true
+  }
+}
