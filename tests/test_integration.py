@@ -19,6 +19,7 @@ def _make_app(**kwargs):
         cluster_id=kwargs.get("cluster_id", "test-integration"),
         node_id=kwargs.get("node_id", "test-main"),
         node_role=kwargs.get("node_role", "main"),
+        authority_mode="legacy-standalone",
     )
 
 

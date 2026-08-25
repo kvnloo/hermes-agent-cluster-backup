@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from .authority import AUTHORITY_DENIED_DETAIL, AuthorityMode
 from .state import ClusterState
 from .routers import (
     nodes_router,
@@ -58,6 +59,7 @@ def create_app(
     config_path: str = "",
     fed_token: str = "",
     static_dir: Optional[str] = None,
+    authority_mode: AuthorityMode | str = AuthorityMode.mesh,
 ) -> FastAPI:
     """Create and configure the FastAPI application.
 
@@ -68,7 +70,10 @@ def create_app(
         config_path: Path to cluster.yaml for config save/load
         fed_token: Shared secret for federation auth
         static_dir: Path to dashboard static files (HTML/CSS/JS)
+        authority_mode: ``mesh`` (default, placement only) or the explicit
+            ``legacy-standalone`` compatibility mode.
     """
+    authority_mode = AuthorityMode(authority_mode)
     app = FastAPI(
         title="hermes-agent-cluster",
         description="Python backend for Hermes Agent Cluster — replaces Go implementation",
@@ -86,11 +91,41 @@ def create_app(
         allow_headers=["*"],
     )
 
+    # Hermes integration is placement-only. Keep upstream lifecycle behavior
+    # solely behind an explicit standalone compatibility mode.
+    canonical_mutations = {
+        ("POST", "/api/v1/tasks"),
+        ("POST", "/api/v1/schedule/trigger"),
+        ("POST", "/api/v1/recovery/trigger"),
+        ("POST", "/api/v1/recovery/detect-expired"),
+        ("POST", "/api/v1/sync/receive"),
+        ("POST", "/api/v1/sync/receive-batch"),
+        ("POST", "/api/v1/federation/tasks"),
+    }
+    task_mutation_suffixes = {
+        "complete", "fail", "unblock", "advance", "dependencies", "claim", "release"
+    }
+
+    @app.middleware("http")
+    async def enforce_lifecycle_authority(request: Request, call_next):
+        path = request.url.path.rstrip("/") or "/"
+        is_task_mutation = (
+            request.method == "POST"
+            and path.startswith("/api/v1/tasks/")
+            and path.rsplit("/", 1)[-1] in task_mutation_suffixes
+        )
+        if authority_mode is AuthorityMode.mesh and (
+            (request.method, path) in canonical_mutations or is_task_mutation
+        ):
+            return JSONResponse(status_code=403, content={"detail": AUTHORITY_DENIED_DETAIL})
+        return await call_next(request)
+
     # Initialize state
     state = ClusterState()
     state.cluster_id = cluster_id
     state.node_id = node_id
     state.node_role = node_role
+    app.state.authority_mode = authority_mode.value
     if config_path:
         state.set_config_path(config_path)
 

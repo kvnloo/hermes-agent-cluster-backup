@@ -62,6 +62,7 @@ def _get_plugin_config() -> Dict[str, Any]:
         "token": "",
         "config_path": "",
         "static_dir": "",
+        "authority_mode": "mesh",
     }
 
     env_map = {
@@ -73,6 +74,7 @@ def _get_plugin_config() -> Dict[str, Any]:
         "HERMES_CLUSTER_TOKEN": ("token", str),
         "HERMES_CLUSTER_CONFIG": ("config_path", str),
         "HERMES_CLUSTER_STATIC_DIR": ("static_dir", str),
+        "HERMES_CLUSTER_AUTHORITY_MODE": ("authority_mode", str),
     }
 
     for env_var, (key, converter) in env_map.items():
@@ -122,6 +124,7 @@ def _start_server(config: Dict[str, Any]) -> bool:
                 config_path=config.get("config_path", ""),
                 fed_token=config.get("token", ""),
                 static_dir=static_dir if static_dir else None,
+                authority_mode=config.get("authority_mode", "mesh"),
             )
 
             uvicorn.run(app, host="0.0.0.0", port=port, log_level="warning")
@@ -402,7 +405,14 @@ def _on_session_end(**kwargs) -> None:
 
 def register(ctx) -> None:
     """Register cluster tools with Hermes Agent."""
-    for name, schema in SCHEMAS.items():
+    authority_mode = _get_plugin_config()["authority_mode"]
+    legacy_authority_tools = {"kanban_cluster_submit", "kanban_cluster_complete"}
+    schemas = {
+        name: schema
+        for name, schema in SCHEMAS.items()
+        if authority_mode == "legacy-standalone" or name not in legacy_authority_tools
+    }
+    for name, schema in schemas.items():
         ctx.register_tool(
             name=name,
             toolset="kanban_cluster",
@@ -416,4 +426,7 @@ def register(ctx) -> None:
     ctx.register_hook("on_session_start", _on_session_start)
     ctx.register_hook("on_session_end", _on_session_end)
 
-    logger.info("hermes-cluster Python plugin registered %d tools + auto-start hooks", len(SCHEMAS))
+    logger.info(
+        "hermes-cluster Python plugin registered %d tools in %s mode + auto-start hooks",
+        len(schemas), authority_mode,
+    )

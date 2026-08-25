@@ -17,6 +17,7 @@ def app():
         cluster_id="test-cluster",
         node_id="test-node",
         node_role="main",
+        authority_mode="legacy-standalone",
     )
 
 
