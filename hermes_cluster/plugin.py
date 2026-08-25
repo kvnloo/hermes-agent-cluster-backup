@@ -189,7 +189,7 @@ def _api_call(method: str, path: str, data: dict = None) -> dict:
 def handle_cluster_init(args: dict, **kwargs) -> str:
     """Start the Python cluster backend."""
     config = _get_plugin_config()
-    config.update(args)
+    config.update({key: value for key, value in args.items() if key != "authority_mode"})
 
     success = _start_server(config)
     if success:

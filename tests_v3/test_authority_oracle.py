@@ -1,6 +1,8 @@
 """Executable authority oracle for Hermes Mesh integration mode."""
 
+import importlib.util
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -191,6 +193,69 @@ class RecordingPluginContext:
 
     def register_hook(self, *_args, **_kwargs):
         pass
+
+    def register_command(self, *_args, **_kwargs):
+        pass
+
+
+def _load_plugin_entrypoint(path: Path):
+    module_name = f"authority_oracle_{path.parent.name}_{path.stat().st_ino}"
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.mark.parametrize(
+    "entrypoint",
+    [
+        Path(__file__).parents[1] / "__init__.py",
+        Path(__file__).parents[1] / "plugins" / "hermes-agent-cluster" / "__init__.py",
+    ],
+)
+def test_shipped_plugin_entrypoints_default_to_zero_authority(monkeypatch, entrypoint):
+    monkeypatch.delenv("HERMES_CLUSTER_AUTHORITY_MODE", raising=False)
+    loaded_plugin = _load_plugin_entrypoint(entrypoint)
+    context = RecordingPluginContext()
+
+    loaded_plugin.register(context)
+
+    assert "kanban_cluster_join" in context.tools
+    assert "kanban_cluster_submit" not in context.tools
+    assert "kanban_cluster_complete" not in context.tools
+
+
+@pytest.mark.parametrize(
+    "loaded_plugin",
+    [
+        plugin,
+        pytest.param(
+            Path(__file__).parents[1] / "__init__.py", id="root-entrypoint"
+        ),
+        pytest.param(
+            Path(__file__).parents[1] / "plugins" / "hermes-agent-cluster" / "__init__.py",
+            id="installed-entrypoint",
+        ),
+    ],
+)
+def test_init_payload_cannot_override_operator_authority_mode(
+    monkeypatch, loaded_plugin
+):
+    if isinstance(loaded_plugin, Path):
+        loaded_plugin = _load_plugin_entrypoint(loaded_plugin)
+    started_configs = []
+    monkeypatch.setattr(
+        loaded_plugin, "_start_server", lambda config: started_configs.append(config) or True
+    )
+
+    monkeypatch.delenv("HERMES_CLUSTER_AUTHORITY_MODE", raising=False)
+    loaded_plugin.handle_cluster_init({"authority_mode": "legacy-standalone"})
+    assert started_configs[-1]["authority_mode"] == "mesh"
+
+    monkeypatch.setenv("HERMES_CLUSTER_AUTHORITY_MODE", "legacy-standalone")
+    loaded_plugin.handle_cluster_init({"authority_mode": "mesh"})
+    assert started_configs[-1]["authority_mode"] == "legacy-standalone"
 
 
 def test_plugin_default_exposes_placement_tools_but_no_task_authority(monkeypatch):
