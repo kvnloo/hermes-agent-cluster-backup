@@ -1,0 +1,4 @@
+[
+{"id":5246242471,"issue":5,"user":"ChefControl","created_at":"2026-08-10T21:27:42Z","updated_at":"2026-08-10T21:27:42Z","html_url":"https://github.com/HughesCuit/hermes-agent-cluster/issues/5#issuecomment-5246242471","body":"@HughesCuit FYI"},
+{"id":5251252129,"issue":5,"user":"HughesCuit","created_at":"2026-08-11T09:16:03Z","updated_at":"2026-08-11T09:16:03Z","html_url":"https://github.com/HughesCuit/hermes-agent-cluster/issues/5#issuecomment-5251252129","body":"> [@HughesCuit](https://github.com/HughesCuit) FYI\n\nThanks for bringing this to my attention!\n\nThe exposed API key has been revoked and rotated, and the related sensitive information has been removed from the repository and its Git history.\n\nI appreciate you taking the time to report this issue."}
+]
